@@ -1,28 +1,22 @@
 import pandas as pd
 import numpy as np
+import scipy.stats.stats as stats
 
 df = pd.read_csv('data/telco_churn.csv', na_values=[' '])
 df['label'] = df['Churn'].map({'Yes': 1, 'No': 0})
+df['TotalCharges'] = pd.to_numeric(df['TotalCharges'])
 
-
-class Feature(object):
-
-    label = 'label'
+class IV():
     agg = {
-        label: ['count', 'sum']
+        'label': ['count', 'sum']
     }
 
-    def __init__(self, df, feature):
-        self.feature = feature
-        self.df_lite = df[[feature, self.label]]
-        self.df_with_iv, self.iv = None, None
-
-    def group_by_feature(self):
-        df = self.df_lite \
-                            .groupby(self.feature) \
+    def group_by_feature(self, feat):
+        df = feat.df_lite \
+                            .groupby('bin') \
                             .agg(self.agg) \
                             .reset_index()
-        df.columns = [self.feature, 'count', 'good']
+        df.columns = [feat.feature, 'count', 'good']
         df['bad'] = df['count'] - df['good']
         return df
 
@@ -30,27 +24,85 @@ class Feature(object):
     def perc_share(df, group_name):
         return df[group_name] / df[group_name].sum()
 
-    def calculate_perc_share(self):
-        df = self.group_by_feature()
+    def calculate_perc_share(self, feat):
+        df = self.group_by_feature(feat)
         df['perc_good'] = self.perc_share(df, 'good')
         df['perc_bad'] = self.perc_share(df, 'bad')
         df['perc_diff'] = df['perc_good'] - df['perc_bad']
         return df
 
-    def calculate_woe(self):
-        df = self.calculate_perc_share()
+    def calculate_woe(self, feat):
+        df = self.calculate_perc_share(feat)
         df['woe'] = np.log(df['perc_good']/df['perc_bad'])
+        df['woe'] = df['woe'].replace([np.inf, -np.inf], np.nan).fillna(0)
         return df
 
-    def calculate_iv(self):
-        df = self.calculate_woe()
+    def calculate_iv(self, feat):
+        df = self.calculate_woe(feat)
         df['iv'] = df['perc_diff'] * df['woe']
-        self.df_with_iv, self.iv = df, df['iv'].sum()
         return df, df['iv'].sum()
 
 
-feat_gender = Feature(df, 'gender')
-feat_contract = Feature(df, 'Contract')
+class CategoricalFeature():
+    def __init__(self, df, feature):
+        self.df = df
+        self.feature = feature
+
+    @property
+    def df_lite(self):
+        with pd.option_context('mode.chained_assignment', None):
+            df_lite = self.df
+        df_lite['bin'] = df_lite[self.feature].fillna('MISSING')
+        return df_lite[['bin', 'label']]
+
+
+class ContinuousFeature():
+    def __init__(self, df, feature):
+        self.df = df
+        self.feature = feature
+        self.bin_min_size = int(len(self.df) * 0.05)
+
+    def generate_bins(self, bins_num):
+        df = self.df[[self.feature, 'label']]
+        df['bin'] = pd.qcut(df[self.feature], bins_num, duplicates='drop').apply(lambda x: x.left).astype(float)
+        return df
+
+    def generate_correct_bins(self, bins_max=20):
+        for bins_num in range(bins_max, 1, -1):
+            with pd.option_context('mode.chained_assignment', None):
+                df = self.generate_bins(bins_num)
+            df_grouped = pd.DataFrame(df.groupby('bin') \
+                                      .agg({self.feature: 'count',
+                                            'label': 'sum'})) \
+                                      .reset_index()
+            r, p = stats.spearmanr(df_grouped['bin'], df_grouped['label'])
+
+            if (
+                    abs(r)==1 and                                                        # check if woe for bins are monotonic
+                    df_grouped[self.feature].min() > self.bin_min_size                   # check if bin size is greater than 5%
+                    and not (df_grouped[self.feature] == df_grouped['label']).any()      # check if number of good and bad is not equal to 0
+            ):
+                break
+
+        return df
+
+    @property
+    def df_lite(self):
+        with pd.option_context('mode.chained_assignment', None):
+            df_lite = self.generate_correct_bins()
+        df_lite['bin'].fillna('MISSING', inplace=True)
+        return df_lite[['bin', 'label']]
+
+
+feat_gender = CategoricalFeature(df, 'gender')
+feat_charges = ContinuousFeature(df, 'TotalCharges')
+
+iv = IV()
+iv.calculate_iv(feat_gender)
+iv.calculate_iv(feat_charges)
+
+#feat_contract = CategoricalFeature(df, 'Contract')
+#feat_tenure = ContinuousFeature(df, 'tenure')
 
 
 ### Continuous variables
@@ -61,38 +113,7 @@ feat_contract = Feature(df, 'Contract')
 # Check if woe is monotonic
 # Iterate
 
-import scipy.stats.stats as stats
 
-class ContinuousFeature(Feature):
-    #label = 'label'
-
-    def __init__(self, df, feature):
-        super().__init__(df, feature)
-        self.bin_min_size = int(len(self.df_lite) * 0.05)
-
-    def generate_bins(self, bins_num):
-        df = self.df_lite
-        df['bin'] = pd.qcut(df[self.feature], bins_num, labels=False, duplicates='drop')
-        return df
-
-    def generate_correct_bins(self, bins_max):
-        for bins_num in range(bins_max, 1, -1):
-            with pd.option_context('mode.chained_assignment', None):
-                df = self.generate_bins(bins_num)
-            df_grouped = pd.DataFrame(df.groupby('bin') \
-                                      .agg({self.feature: 'count',
-                                            self.label: 'sum'})) \
-                                      .reset_index()
-            r, p = stats.spearmanr(df_grouped['bin'], df_grouped[self.label])
-
-            if (
-                    abs(r)==1 and       # check if woe for bins are monotonic
-                    df_grouped[self.feature].min() > self.bin_min_size      # check if bin size is greater than 5%
-                    and not (df_grouped[self.feature] == df_grouped[self.label]).any()      # check if number of good and bad is not equal to 0
-            ):
-                break
-
-        return df
 
 
 charges = ContinuousFeature(df, 'TotalCharges')
@@ -104,7 +125,7 @@ x = tenure.generate_correct_bins(20)
 
 ########
 
-feature = 'tenure'
+feature = 'TotalCharges'
 bins_num = 20
 df[feature] = pd.to_numeric(df[feature])
 
