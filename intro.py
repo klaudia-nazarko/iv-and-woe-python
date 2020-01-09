@@ -25,15 +25,16 @@ class AttributeRelevance():
         df = pd.DataFrame.from_dict(stats_dict, orient='index', columns=['p-value', 'effect_size'])
         return df
 
-    def analyze(self, feats, iv, s=None):
+    def analyze(self, feats, iv, s=None, interpretation=False):
         df_iv = self.bulk_iv(feats, iv).sort_values(by='iv', ascending=False)
-        if s is None:
-            return df_iv
-        else:
+        if s is not None:
             df_stats = self.bulk_stats(feats, s)
-            return df_iv.merge(df_stats, left_index=True, right_index=True)
-
-
+            df_iv = df_iv.merge(df_stats, left_index=True, right_index=True)
+        if interpretation:
+            df_iv['iv_interpretation'] = df_iv['iv'].apply(iv.interpretation)
+            if s is not None:
+                df_iv['es_interpretation'] = df_iv['effect_size'].apply(s.interpretation)
+        return df_iv
 
 class Analysis():
     def group_by_feature(self, feat):
@@ -54,6 +55,24 @@ class StatsSignificance(Analysis):
         chi = stats.chi2_contingency(df_chi)
         cramers_v = np.sqrt(chi[0] / n)          # assume that k=2 (good, bad)
         return chi[1], cramers_v
+
+    @staticmethod
+    def interpretation(cramers_v):
+        if cramers_v < 0.1:
+            return 'useless'
+        elif cramers_v < 0.2:
+            return 'weak'
+        elif cramers_v < 0.4:
+            return 'medium'
+        elif cramers_v < 0.6:
+            return 'strong'
+        else:
+            return 'very strong'
+
+    def interpret_chi(self, feat):
+        _, cramers_v = self.calculate_chi(feat)
+        return self.interpretation(cramers_v)
+
 
 class IV(Analysis):
     @staticmethod
@@ -86,6 +105,23 @@ class IV(Analysis):
         sns.barplot(x=feat.feature, y='woe', data=iv_df, palette=palette)
         ax.set_title('WOE visualization for: ' + feat.feature)
         plt.show()
+
+    @staticmethod
+    def interpretation(iv):
+        if iv < 0.02:
+            return 'useless'
+        elif iv < 0.1:
+            return 'weak'
+        elif iv < 0.3:
+            return 'medium'
+        elif iv < 0.5:
+            return 'strong'
+        else:
+            return 'suspicious'
+
+    def interpret_iv(self, feat):
+        _, iv = self.calculate_iv(feat)
+        return self.interpretation(iv)
 
 
 class CategoricalFeature():
