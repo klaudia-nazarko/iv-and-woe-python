@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class AttributeRelevance():
-    def __bulk_iv(self, feats, iv):
+    def bulk_iv(self, feats, iv):
         iv_dict = {}
         for f in feats:
             iv_df, iv_value = iv.calculate_iv(f)
@@ -13,7 +13,7 @@ class AttributeRelevance():
         df = pd.DataFrame.from_dict(iv_dict, orient='index', columns=['iv'])
         return df
 
-    def __bulk_stats(self, feats, s):
+    def bulk_stats(self, feats, s):
         stats_dict = {}
         for f in feats:
             p_value, effect_size = s.calculate_chi(f)
@@ -22,9 +22,9 @@ class AttributeRelevance():
         return df
 
     def analyze(self, feats, iv, s=None, interpretation=False):
-        df_iv = self.__bulk_iv(feats, iv).sort_values(by='iv', ascending=False)
+        df_iv = self.bulk_iv(feats, iv).sort_values(by='iv', ascending=False)
         if s is not None:
-            df_stats = self.__bulk_stats(feats, s)
+            df_stats = self.bulk_stats(feats, s)
             df_iv = df_iv.merge(df_stats, left_index=True, right_index=True)
         if interpretation:
             df_iv['iv_interpretation'] = df_iv['iv'].apply(iv.interpretation)
