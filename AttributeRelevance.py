@@ -4,12 +4,8 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-df = pd.read_csv('data/telco_churn.csv', na_values=[' '])
-df['label'] = df['Churn'].map({'Yes': 1, 'No': 0})
-df['TotalCharges'] = pd.to_numeric(df['TotalCharges'])
-
 class AttributeRelevance():
-    def bulk_iv(self, feats, iv):
+    def __bulk_iv(self, feats, iv):
         iv_dict = {}
         for f in feats:
             iv_df, iv_value = iv.calculate_iv(f)
@@ -17,7 +13,7 @@ class AttributeRelevance():
         df = pd.DataFrame.from_dict(iv_dict, orient='index', columns=['iv'])
         return df
 
-    def bulk_stats(self, feats, s):
+    def __bulk_stats(self, feats, s):
         stats_dict = {}
         for f in feats:
             p_value, effect_size = s.calculate_chi(f)
@@ -26,9 +22,9 @@ class AttributeRelevance():
         return df
 
     def analyze(self, feats, iv, s=None, interpretation=False):
-        df_iv = self.bulk_iv(feats, iv).sort_values(by='iv', ascending=False)
+        df_iv = self.__bulk_iv(feats, iv).sort_values(by='iv', ascending=False)
         if s is not None:
-            df_stats = self.bulk_stats(feats, s)
+            df_stats = self.__bulk_stats(feats, s)
             df_iv = df_iv.merge(df_stats, left_index=True, right_index=True)
         if interpretation:
             df_iv['iv_interpretation'] = df_iv['iv'].apply(iv.interpretation)
@@ -132,111 +128,3 @@ class IV(Analysis):
         _, iv = self.calculate_iv(feat)
         print('Information value: %0.2f' % iv)
         print('%s is a %s predictor' % (feat.feature.capitalize(), self.interpretation(iv)))
-
-
-class CategoricalFeature():
-    def __init__(self, df, feature):
-        self.df = df
-        self.feature = feature
-
-    @property
-    def df_lite(self):
-        with pd.option_context('mode.chained_assignment', None):
-            df_lite = self.df
-        df_lite['bin'] = df_lite[self.feature].fillna('MISSING')
-        return df_lite[['bin', 'label']]
-
-
-class ContinuousFeature():
-    def __init__(self, df, feature):
-        self.df = df
-        self.feature = feature
-        self.bin_min_size = int(len(self.df) * 0.05)
-
-    def __generate_bins(self, bins_num):
-        df = self.df[[self.feature, 'label']]
-        df['bin'] = pd.qcut(df[self.feature], bins_num, duplicates='drop') \
-                    .apply(lambda x: x.left) \
-                    .astype(float)
-        return df
-
-    def __generate_correct_bins(self, bins_max=20):
-        for bins_num in range(bins_max, 1, -1):
-            with pd.option_context('mode.chained_assignment', None):
-                df = self.__generate_bins(bins_num)
-            df_grouped = pd.DataFrame(df.groupby('bin') \
-                                      .agg({self.feature: 'count',
-                                            'label': 'sum'})) \
-                                      .reset_index()
-            r, p = stats.stats.spearmanr(df_grouped['bin'], df_grouped['label'])
-
-            if (
-                    abs(r)==1 and                                                        # check if woe for bins are monotonic
-                    df_grouped[self.feature].min() > self.bin_min_size                   # check if bin size is greater than 5%
-                    and not (df_grouped[self.feature] == df_grouped['label']).any()      # check if number of good and bad is not equal to 0
-            ):
-                break
-
-        return df
-
-    @property
-    def df_lite(self):
-        with pd.option_context('mode.chained_assignment', None):
-            df_lite = self.__generate_correct_bins()
-        df_lite['bin'].fillna('MISSING', inplace=True)
-        return df_lite[['bin', 'label']]
-
-
-feat_gender = CategoricalFeature(df, 'gender')
-feat_charges = ContinuousFeature(df, 'TotalCharges')
-
-iv = IV()
-iv.calculate_iv(feat_gender)
-iv.calculate_iv(feat_charges)
-
-iv.draw_woe(feat_gender)
-iv.draw_woe(feat_charges)
-
-feat_contract = CategoricalFeature(df, 'Contract')
-feat_tenure = ContinuousFeature(df, 'tenure')
-
-s = StatsSignificance()
-
-feats = [feat_gender, feat_charges, feat_contract, feat_tenure]
-iva = AttributeRelevance()
-iva.bulk_iv(feats, iv)
-
-iva.bulk_stats(feats, s)
-
-iva.analyze(feats, iv, s)
-
-### Continuous variables
-# Group NaNs together
-# Split into X (eg 20 / 10) equal-size bins
-# Check if each bin is bigger than 5% of all observations
-# Non zero for events and non-events
-# Check if woe is monotonic
-# Iterate
-
-
-
-
-charges = ContinuousFeature(df, 'TotalCharges')
-x = charges.generate_correct_bins(20)
-
-tenure = ContinuousFeature(df, 'tenure')
-x = tenure.generate_correct_bins(20)
-
-
-########
-
-feature = 'TotalCharges'
-bins_num = 20
-df[feature] = pd.to_numeric(df[feature])
-
-while bins_num > 0:
-    df['bin'] = pd.qcut(df[feature], bins_num, labels=False, duplicates='drop')
-    check = pd.DataFrame(df.groupby('bin').agg({feature: 'count', 'label': 'sum'})).reset_index()
-    r, p = stats.spearmanr(check['bin'], check['label'])
-    print(bins_num, r)
-    bins_num -= 1
