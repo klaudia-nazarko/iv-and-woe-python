@@ -5,12 +5,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class AttributeRelevance():
-    def bulk_iv(self, feats, iv):
+    def bulk_iv(self, feats, iv, woe_extremes=False):
         iv_dict = {}
         for f in feats:
             iv_df, iv_value = iv.calculate_iv(f)
-            iv_dict[f.feature] = iv_value
-        df = pd.DataFrame.from_dict(iv_dict, orient='index', columns=['iv'])
+            if woe_extremes:
+                iv_dict[f.feature] = [iv_value, iv_df['woe'].min(), iv_df['woe'].max()]
+                cols = ['iv', 'woe_min', 'woe_max']
+            else:
+                iv_dict[f.feature] = iv_value
+                cols = ['iv']
+        df = pd.DataFrame.from_dict(iv_dict, orient='index', columns=cols)
         return df
 
     def bulk_stats(self, feats, s):
@@ -31,6 +36,43 @@ class AttributeRelevance():
             if s is not None:
                 df_iv['es_interpretation'] = df_iv['effect_size'].apply(s.interpretation)
         return df_iv
+
+    def draw_iv(self, feats, iv):
+        df = self.analyze(feats, iv)
+        fig, ax = plt.subplots(figsize=(10, 6))
+        palette = sns.color_palette("Set2")
+        sns.barplot(x=df.index, y='iv', data=df, palette=palette)
+        ax.set_title('IV values')
+        plt.xticks(rotation=90)
+        plt.show()
+
+    def draw_woe_extremes(self, feats, iv):
+        df = self.bulk_iv(feats, iv, woe_extremes=True).sort_values(by='iv', ascending=False)
+        fig, ax = plt.subplots(figsize=(10, 6))
+        palette = sns.color_palette("Set2")
+        sns.barplot(x=df.index, y='woe_min', data=df, palette=palette)
+        sns.barplot(x=df.index, y='woe_max', data=df, palette=palette)
+        ax.axhline(y=0, color='black', linewidth=1)
+        ax.set_title('Range of WOE values')
+        ax.set_ylabel('WOE')
+        plt.xticks(rotation=90)
+        plt.show()
+
+    def draw_woe_multiplot(self, feats, iv):
+        n = len(feats)
+        nrows = int(np.ceil(n/3))
+        fig, ax = plt.subplots(nrows=nrows, ncols=3, figsize=(15, nrows*4))
+        palette = sns.color_palette("Set2")
+        for i in range(n):
+            iv_df, iv_value = iv.calculate_iv(feats[i])
+            sns.barplot(x=feats[i].feature, y='woe', data=iv_df, palette=palette, ax=fig.axes[i])
+
+        for ax in fig.axes:
+            plt.sca(ax)
+            plt.xticks(rotation=50)
+
+        plt.tight_layout()
+        plt.show()
 
 class Analysis():
     def group_by_feature(self, feat):
