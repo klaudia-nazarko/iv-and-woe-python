@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class AttributeRelevance():
-    def seq_palette(self, feats):
-        return sns.cubehelix_palette(len(feats), start=.5, rot=-.75, reverse=True)
+    def seq_palette(self, n_colors):
+        return sns.cubehelix_palette(n_colors, start=.5, rot=-.75, reverse=True)
 
     def bulk_iv(self, feats, iv, woe_extremes=False):
         iv_dict = {}
@@ -43,7 +43,7 @@ class AttributeRelevance():
     def draw_iv(self, feats, iv):
         df = self.analyze(feats, iv)
         fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(x=df.index, y='iv', data=df, palette=self.seq_palette(feats))
+        sns.barplot(x=df.index, y='iv', data=df, palette=self.seq_palette(len(feats)))
         ax.set_title('IV values')
         plt.xticks(rotation=90)
         plt.show()
@@ -51,8 +51,8 @@ class AttributeRelevance():
     def draw_woe_extremes(self, feats, iv):
         df = self.bulk_iv(feats, iv, woe_extremes=True).sort_values(by='iv', ascending=False)
         fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(x=df.index, y='woe_min', data=df, palette=self.seq_palette(feats))
-        sns.barplot(x=df.index, y='woe_max', data=df, palette=self.seq_palette(feats))
+        sns.barplot(x=df.index, y='woe_min', data=df, palette=self.seq_palette(len(feats)))
+        sns.barplot(x=df.index, y='woe_max', data=df, palette=self.seq_palette(len(feats)))
         ax.axhline(y=0, color='black', linewidth=1)
         ax.set_title('Range of WOE values')
         ax.set_ylabel('WOE')
@@ -75,8 +75,8 @@ class AttributeRelevance():
         plt.show()
 
 class Analysis():
-    def seq_palette(self, feats):
-        return sns.cubehelix_palette(len(feats), start=.5, rot=-.75, reverse=True)
+    def seq_palette(self, n_colors):
+        return sns.cubehelix_palette(n_colors, start=.5, rot=-.75, reverse=True)
 
     def group_by_feature(self, feat):
         df = feat.df_lite \
@@ -147,7 +147,7 @@ class IV(Analysis):
         with pd.option_context('mode.chained_assignment', None):
             iv_df, iv_value = self.calculate_iv(feat)
         fig, ax = plt.subplots(figsize=(10,6))
-        sns.barplot(x=feat.feature, y='woe', data=iv_df, palette=self.seq_palette(feat))
+        sns.barplot(x=feat.feature, y='woe', data=iv_df, palette=self.seq_palette(len(iv_df.index)))
         ax.set_title('WOE visualization for: ' + feat.feature)
         plt.show()
         plt.show()
