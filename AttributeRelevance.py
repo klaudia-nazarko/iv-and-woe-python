@@ -4,6 +4,8 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+pd.set_option('mode.chained_assignment', None)
+
 class AttributeRelevance():
     def seq_palette(self, n_colors):
         return sns.cubehelix_palette(n_colors, start=.5, rot=-.75, reverse=True)
@@ -144,8 +146,7 @@ class IV(Analysis):
         return df, df['iv'].sum()
 
     def draw_woe(self, feat):
-        with pd.option_context('mode.chained_assignment', None):
-            iv_df, iv_value = self.calculate_iv(feat)
+        iv_df, iv_value = self.calculate_iv(feat)
         fig, ax = plt.subplots(figsize=(10,6))
         sns.barplot(x=feat.feature, y='woe', data=iv_df, palette=self.seq_palette(len(iv_df.index)))
         ax.set_title('WOE visualization for: ' + feat.feature)

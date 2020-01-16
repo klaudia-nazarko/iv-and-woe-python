@@ -8,8 +8,7 @@ class CategoricalFeature():
 
     @property
     def df_lite(self):
-        with pd.option_context('mode.chained_assignment', None):
-            df_lite = self.df
+        df_lite = self.df
         df_lite['bin'] = df_lite[self.feature].fillna('MISSING')
         return df_lite[['bin', 'label']]
 
@@ -29,8 +28,7 @@ class ContinuousFeature():
 
     def __generate_correct_bins(self, bins_max=20):
         for bins_num in range(bins_max, 1, -1):
-            with pd.option_context('mode.chained_assignment', None):
-                df = self.__generate_bins(bins_num)
+            df = self.__generate_bins(bins_num)
             df_grouped = pd.DataFrame(df.groupby('bin') \
                                       .agg({self.feature: 'count',
                                             'label': 'sum'})) \
@@ -48,7 +46,6 @@ class ContinuousFeature():
 
     @property
     def df_lite(self):
-        with pd.option_context('mode.chained_assignment', None):
-            df_lite = self.__generate_correct_bins()
+        df_lite = self.__generate_correct_bins()
         df_lite['bin'].fillna('MISSING', inplace=True)
         return df_lite[['bin', 'label']]
