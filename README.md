@@ -10,8 +10,8 @@ This repository contains analysis of churn in telephone service company (using I
 
 ### Contents
 
-**Telco Customer Churn Analysis using IV and WOE** - Being able to distinguish clients who are likely to churn is a key to success and enables businesses to take appropriate actions. See what is the churner profile for Telco company.
+[**Telco Customer Churn Analysis using IV and WOE**](https://github.com/klaudia-nazarko/woe-and-iv/blob/master/telco_customer_churn_analysis.ipynb) - Being able to distinguish clients who are likely to churn is a key to success and enables businesses to take appropriate actions. See what is the churner profile for Telco company.
 
-**Statistical Significance of Information Value** - How differences in distribution of 'goods' and 'bads' are measured by two methods: IV & WOE and p-value & effect size? See how statistically significant are results obtained with information value technique.
+[**Statistical Significance of Information Value**](https://github.com/klaudia-nazarko/woe-and-iv/blob/master/statistical_significance_of_information_value.ipynb) - How differences in distribution of 'goods' and 'bads' are measured by two methods: IV & WOE and p-value & effect size? See how statistically significant are results obtained with information value technique.
 
-**Information Value (IV) and Weight of Evidence (WOE) in Python** - Information value module contains all you need to conduct IV & WOE analysis. See how to use it to get the results and create insightful visualizations.
+[**Information Value (IV) and Weight of Evidence (WOE) in Python**](https://github.com/klaudia-nazarko/woe-and-iv/blob/master/iv_and_woe_in_python.ipynb) - Information value module contains all you need to conduct IV & WOE analysis. See how to use it to get the results and create insightful visualizations.
