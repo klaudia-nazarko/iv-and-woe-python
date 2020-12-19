@@ -8,6 +8,12 @@ This repository contains analysis of churn in telephone service company (using I
 
 
 
+Learn more from the article about this analysis: **[Churn Analysis Using Information Value and Weight of Evidence](https://towardsdatascience.com/churn-analysis-information-value-and-weight-of-evidence-6a35db8b9ec5)**
+
+------
+
+
+
 ### Contents
 
 [**Telco Customer Churn Analysis using IV and WOE**](telco_customer_churn_analysis.ipynb) - Being able to distinguish clients who are likely to churn is a key to success and enables businesses to take appropriate actions. See what is the churner profile for Telco company.
