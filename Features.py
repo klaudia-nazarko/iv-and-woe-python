@@ -33,7 +33,7 @@ class ContinuousFeature():
                                       .agg({self.feature: 'count',
                                             'label': 'sum'})) \
                                       .reset_index()
-            r, p = stats.stats.spearmanr(df_grouped['bin'], df_grouped['label'])
+            r, p = stats.stats.spearmanr(df_grouped['bin'], df_grouped['label']/df_grouped[self.feature])
 
             if (
                     abs(r)==1 and                                                        # check if woe for bins are monotonic
