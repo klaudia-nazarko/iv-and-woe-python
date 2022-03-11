@@ -1,23 +1,26 @@
-# Churn analysis using IV and WOE in Python
+# Information Value and Weight Of Evidence in Python
 
-Attribute relevance analysis helps in recognizing the most important variables which have the greatest impact on target variable and understanding relations and logic between the most important predictors and the target variable.
+Attribute relevance analysis **helps in recognizing the most important variables which have the greatest impact on 
+target variable** and understanding relations and logic between the most important predictors and the target variable.
 
-Information value (IV) and weight of evidence (WOE) are simple and powerful techniques of conducting attribute relevance analysis. They provide a great framework for exploratory analysis and have been used extensively in the credit risk world for several decades.
+Information value (IV) and weight of evidence (WOE) are simple and powerful techniques of conducting attribute
+relevance analysis. They provide a great framework for exploratory analysis and have been used extensively in the credit
+risk world for several decades.
 
-This repository contains analysis of churn in telephone service company (using IV and WOE), comparison of effect size and information value and quick tutorial how to use information value module (created for this analysis).
-
+This library was built to simplify and automate the process of calculating and interpreting IV and WOE. 
 
 
 Learn more from the article about this analysis: **[Churn Analysis Using Information Value and Weight of Evidence](https://towardsdatascience.com/churn-analysis-information-value-and-weight-of-evidence-6a35db8b9ec5)**
 
-------
+## Installation
 
+Install the library by running this code:
+```bash
+# it's nice to start with creating a virtual environment (but is not required).
+python -m venv my_env
 
+pip install git+https://github.com/krzdur/iv-and-woe-python.git
+```
 
-### Contents
-
-[**Telco Customer Churn Analysis using IV and WOE**](telco_customer_churn_analysis.ipynb) - Being able to distinguish clients who are likely to churn is a key to success and enables businesses to take appropriate actions. See what is the churner profile for Telco company.
-
-[**Statistical Significance of Information Value**](statistical_significance_of_information_value.ipynb) - How differences in distribution of 'goods' and 'bads' are measured by two methods: IV & WOE and p-value & effect size? See how statistically significant are results obtained with information value technique.
-
-[**Information Value (IV) and Weight of Evidence (WOE) in Python**](iv_and_woe_in_python.ipynb) - Information value module contains all you need to conduct IV & WOE analysis. See how to use it to get the results and create insightful visualizations.
+## Use cases
+A few examples of usage of the library have been provided in the **[examples](https://github.com/krzdur/iv-and-woe-python/tree/master/examples)**.
