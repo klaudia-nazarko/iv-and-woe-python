@@ -1,6 +1,25 @@
+# data directory
+*/.data
 
 # Created by https://www.gitignore.io/api/python,pycharm,windows,jupyternotebooks
 # Edit at https://www.gitignore.io/?templates=python,pycharm,windows,jupyternotebooks
+
+### venv ###
+# Virtualenv
+# http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
+.Python
+[Bb]in
+[Ee]tc
+[Ss]hare
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
+*/.venv
+.venv
+pip-selfcheck.json
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
